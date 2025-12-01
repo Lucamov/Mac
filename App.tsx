@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, Wallet, MessageSquareText, AlertTriangle, LogOut, User as UserIcon, Calendar as CalendarIcon } from 'lucide-react';
 import Dashboard from './components/Dashboard';
@@ -18,9 +20,12 @@ const App: React.FC = () => {
 
   // 1. Check for existing session on mount
   useEffect(() => {
-    const savedUser = localStorage.getItem('gemini-finance-user');
-    if (savedUser) {
-      setCurrentUser({ username: savedUser, isLoggedIn: true });
+    // Only access localStorage on client side
+    if (typeof window !== 'undefined') {
+      const savedUser = localStorage.getItem('gemini-finance-user');
+      if (savedUser) {
+        setCurrentUser({ username: savedUser, isLoggedIn: true });
+      }
     }
     setIsLoadingUser(false);
   }, []);
@@ -36,7 +41,7 @@ const App: React.FC = () => {
 
   // 3. Save data WHENEVER transactions change (if user exists)
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser && typeof window !== 'undefined') {
       try {
         localStorage.setItem(`gemini-data-${currentUser.username}`, JSON.stringify(transactions));
       } catch (e) {
@@ -46,6 +51,7 @@ const App: React.FC = () => {
   }, [transactions, currentUser]);
 
   const loadUserData = (username: string) => {
+    if (typeof window === 'undefined') return;
     try {
       const data = localStorage.getItem(`gemini-data-${username}`);
       if (data) {
@@ -64,12 +70,16 @@ const App: React.FC = () => {
   };
 
   const handleLogin = (username: string) => {
-    localStorage.setItem('gemini-finance-user', username);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('gemini-finance-user', username);
+    }
     setCurrentUser({ username, isLoggedIn: true });
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('gemini-finance-user');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('gemini-finance-user');
+    }
     setCurrentUser(null);
     setActiveTab(AppTab.DASHBOARD);
   };
@@ -89,7 +99,7 @@ const App: React.FC = () => {
   const clearAllData = () => {
     if (window.confirm("ATENÇÃO: Isso apagará todas as suas transações PERMANENTEMENTE. Deseja continuar?")) {
       setTransactions([]);
-      if (currentUser) {
+      if (currentUser && typeof window !== 'undefined') {
         localStorage.removeItem(`gemini-data-${currentUser.username}`);
       }
     }
